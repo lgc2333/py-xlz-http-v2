@@ -15,7 +15,7 @@ def usc2_to_unicode(usc2_str: str) -> str:
 def unicode_to_usc2(unicode_str: str, escape=True) -> str:
     """字符串usc2编码"""
     strings = unicode_str.split('\n')  # 分开处理以解决换行符问题，不能用splitlines因为会去掉末尾单个换行符
-    print(strings)
+    # print(strings)
     decoded_str = []
     for string in strings:
         txt = json.dumps({'a': string})  # 为什么不用str.encode('unicode-escape')？因为json文本好处理反斜杠转义
@@ -157,7 +157,7 @@ class TextCode:
                 f'time={length}]')
 
     @staticmethod
-    def at(qq, add_space=False):
+    def at(qq, add_space=True):
         """
         艾特
 
@@ -165,7 +165,7 @@ class TextCode:
         :param add_space: 添加空格 true：添加 false：不添加 美化at显示效果
         :return:
         """
-        return f'[@{qq}]' + ' ' if add_space else ''
+        return f'[@{qq}]' + ' ' if add_space else f'[@{qq}]'
 
     @staticmethod
     def at_all():

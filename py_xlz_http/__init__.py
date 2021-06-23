@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-py-xlz-http  version 2.0.0(20210617)
+py-xlz-http  version 2.0.1(20210623)
 
 Copyright (c) 2021 student_2333
 
@@ -88,7 +88,7 @@ def _get_stack() -> str:
     stacks.reverse()
     for i in stacks[:-1]:
         stack.append(f'{i.filename[i.filename.rfind(os.sep) + 1:]}:{i.lineno}')
-    return ' -> '.join(stack)
+    return ' → '.join(stack)
 
 
 def _process_msg(msg_, msg_type_):

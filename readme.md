@@ -1,6 +1,6 @@
 py-xlz-http-v2
 ----
-py-xlz-http version 2.0.0(20210617)
+py-xlz-http version 2.0.1(20210623)
 
 Copyright (c) 2021 student_2333
 

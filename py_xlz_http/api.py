@@ -33,7 +33,7 @@ def _get_stack() -> str:
     stacks.reverse()
     for i in stacks[:-1]:
         stack.append(f'{i.filename[i.filename.rfind(os.sep) + 1:]}:{i.lineno}')
-    return ' -> '.join(stack)
+    return ' → '.join(stack)
 
 
 def _md5_encode(string: str):
@@ -78,7 +78,7 @@ def _make_request(method, data: typing.Optional[dict], ignore_errors=False):
             raise xlz.types.ApiRequestFailedException(f'Request API {method} Failed')
 
         # 忽略错误
-        xlz.logger.info(f'[{_get_stack()}]访问API {method} [{int(round(time.time() * 1000)) - t}ms] -> None')
+        xlz.logger.info(f'[{_get_stack()}]访问API {method} {data} [{int(round(time.time() * 1000)) - t}ms] -> None')
         return None
     else:
         spent_time = int(round(time.time() * 1000)) - t
@@ -89,7 +89,7 @@ def _make_request(method, data: typing.Optional[dict], ignore_errors=False):
                 f'[{_get_stack()}]解析API {method} 返回json失败 [{spent_time}ms] -> {ret.text}\n{traceback.format_exc()}')
             raise xlz.types.ApiRequestFailedException(f'Parse API {method}\'s return Failed (Raw text: {ret.text})')
         else:
-            xlz.logger.info(f'[{_get_stack()}]访问API {method} [{spent_time}ms] -> {ret.text}')
+            xlz.logger.info(f'[{_get_stack()}]访问API {method} {data} [{spent_time}ms] -> {ret.text}')
             if j['err']:
                 raise xlz.types.ApiRequestFailedException(j['err'])
             return j['ret']
@@ -1028,7 +1028,7 @@ def get_order_info(logon_qq, order_num):
 
 
 def submit_pay_verify_code(logon_qq, verify_code, pay_pwd, token_id, skey, bank_type, mobile, business_type,
-                           random, transaction_id, purchaser_id, token, auth_params):
+                           pay_random, transaction_id, purchaser_id, token, auth_params):
     """
     提交支付验证码
 
@@ -1040,7 +1040,7 @@ def submit_pay_verify_code(logon_qq, verify_code, pay_pwd, token_id, skey, bank_
     :param bank_type:
     :param mobile:
     :param business_type:
-    :param random:
+    :param pay_random: random
     :param transaction_id:
     :param purchaser_id:
     :param token:
@@ -1048,7 +1048,7 @@ def submit_pay_verify_code(logon_qq, verify_code, pay_pwd, token_id, skey, bank_
     :return:
     """
     data = {'logonqq': logon_qq, 'vfcode': verify_code, 'paypwd': pay_pwd, 'token_id': token_id, 'skey': skey,
-            'bank_type': bank_type, 'mobile': mobile, 'business_type': business_type, 'random': random,
+            'bank_type': bank_type, 'mobile': mobile, 'business_type': business_type, 'random': pay_random,
             'transaction_id': transaction_id, 'purchaser_id': purchaser_id, 'token': token, 'auth_params': auth_params}
     return _make_request('submitpayvfcode', data)
 
@@ -1282,18 +1282,18 @@ def get_add_group_url(logon_qq, group):
     return _make_request('getaddgurl', data)
 
 
-def set_essence_msg(logon_qq, group, req, random, is_essence=True):
+def set_essence_msg(logon_qq, group, req, msg_random, is_essence=True):
     """
     设置精华消息
 
     :param logon_qq: 框架QQ
     :param group: 群号
     :param req: 消息req
-    :param random: 消息random
+    :param msg_random: 消息random
     :param is_essence: 是否精华(true,false)
     :return:
     """
-    data = {'logonqq': logon_qq, 'group': group, 'req': req, 'random': random, 'isessence': str(is_essence).lower()}
+    data = {'logonqq': logon_qq, 'group': group, 'req': req, 'random': msg_random, 'isessence': str(is_essence).lower()}
     return _make_request('setessencemsg', data)
 
 
