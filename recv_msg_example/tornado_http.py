@@ -60,8 +60,4 @@ if __name__ == '__main__':
     svr.bind(port)
     svr.start()
     xlz.logger.info(f'服务器启动成功，端口{port}')
-    try:
-        ioloop.IOLoop.current().start()
-    except:
-        xlz.logger.error(f'发生未处理异常：\n{traceback.format_exc()}')
-        input('按回车键退出...')
+    ioloop.IOLoop.current().start()
