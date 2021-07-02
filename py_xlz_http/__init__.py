@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-py-xlz-http  version 2.0.1(20210623)
+py-xlz-http  version 2.0.2(20210702)
 
 Copyright (c) 2021 student_2333
 
@@ -29,6 +29,12 @@ E-mail:lgc2333@126.com
 Telegram:@lgc2333
 """
 
+__version__ = "2.0.2(20210702)"
+
+import requests
+
+print(__doc__.replace('\n\n', '\n').strip())
+
 import inspect
 import json
 import logging.handlers
@@ -46,13 +52,12 @@ import py_xlz_http.api
 import py_xlz_http.types
 import py_xlz_http.utils
 
-print(__doc__.replace('\n\n', '\n').strip())
-
 # usc2_mode = False  # 暂时没用
 
 _private_handlers: list[dict] = []
 _group_handlers: list[dict] = []
 _event_handlers: list[dict] = []
+_schedule_work_handlers: list[dict] = []
 
 
 def _get_logger():
@@ -103,9 +108,18 @@ def _process_msg(msg_, msg_type_):
                 handlers = _group_handlers
             elif msg_type == 3:  # 事件
                 handlers = _event_handlers
+            elif msg_type == 4:  # 定时任务
+                handlers = _schedule_work_handlers
+                # 参数不一样，单独处理（太惨了）
+                for handler in handlers:
+                    if (handler['arg'] is None) or (msg.arg == handler['arg']):
+                        if handler['handler'](msg) is True:  # 调用事件处理函数，返回true停止调用其他函数
+                            logger.info(f'[{_get_stack()}]已拦截消息 [{msg}]')
+                            break
+                return
 
             for handler in handlers:
-                if (handler['bots'] is None) or (msg.logon_qq in handler['bots']):  #
+                if (handler['bots'] is None) or (msg.logon_qq in handler['bots']):
                     if (handler['regexp'] is None) or (re.search(handler['regexp'], msg.msg.text)):
                         if (handler['function'] is None) or (handler['function'](msg)):
                             if handler['handler'](msg) is True:  # 调用事件处理函数，返回true停止调用其他函数
@@ -138,6 +152,9 @@ def update_msg(json_str: str):
             elif j['type'] == 'eventmsg':
                 msg = types.EventMsg(j)
                 msg_type = 3
+            elif j['type'] == 'schedulework':
+                msg = types.ScheduleWork(j)
+                msg_type = 4
             else:
                 raise ValueError('This json is not a message data')
         except:
@@ -238,3 +255,52 @@ def event_msg_handler(bots: typing.Optional[list[int]] = None,
         return wrapper()
 
     return decorator
+
+
+def schedule_work_handler(arg: typing.Optional[str] = None):
+    """
+    定时任务处理 函数装饰器
+
+    示例：
+
+    @schedule_work_handler(arg='work') #处理参数为work的定时任务
+
+    返回 True 拦截其他处理函数继续处理该消息
+    """
+
+    def decorator(func: typing.Callable[[types.ScheduleWork], typing.Optional[bool]]):
+        @wraps(func)
+        def wrapper():
+            _event_handlers.append({'handler': func, 'arg': arg})
+            logger.info(f'[{_get_stack()}]已设置一个定时任务处理函数')
+            return None
+
+        return wrapper()
+
+    return decorator
+
+
+def _check_version():
+    logger.info('正在检查本包更新')
+    try:
+        ret = requests.get(
+            'http://lgc2333.top:88/pl_get',
+            params={'type': 'py', 'name': 'httpv2'}
+        ).json()
+    except:
+        logger.error(f'检查本包更新失败：请求接口失败：\n{traceback.format_exc()}')
+    else:
+        if ret['ok']:
+            result = ret['result']
+            if result["version"] == __version__:
+                logger.info(f'检查本包更新成功：当前为最新版本{__version__}')
+            else:
+                logger.info(f'检查本包更新成功：需要更新\n'
+                            f'当前版本：{__version__}，最新版本：{result["version"]}\n'
+                            f'更新说明：{result["description"]}\n'
+                            f'下载链接：{result["down_link"]}')
+        else:
+            logger.warning(f'请求接口出错：\n{ret["result"]}')
+
+
+threading.Thread(target=_check_version).start()

@@ -222,6 +222,18 @@ class EventMsg(object):
     __repr__ = __str__
 
 
+class ScheduleWork(object):
+    def __init__(self, j: dict):
+        if not j['type'] == 'schedulework':
+            raise ValueError('This json string is not a schedule work message data')
+        self.arg = j['arg']
+
+    def __str__(self):
+        return f'[定时任务]{self.arg}'
+
+    __repr__ = __str__
+
+
 class MessageTypes(enum.Enum):
     """消息类型"""
     临时会话 = 141

@@ -1,6 +1,6 @@
 py-xlz-http-v2
 ----
-py-xlz-http version 2.0.1(20210623)
+py-xlz-http version 2.0.2(20210702)
 
 Copyright (c) 2021 student_2333
 
@@ -24,11 +24,15 @@ License: LGPL-2.1
 
 欢迎大家踊跃参与本项目的开发！我一个人开发此项目难免有些疏漏，可以积极发issue、提交pull request哦！感谢大家帮助完善这个项目！
 
+截止2021.7.2 23:12，该项目累计开发接近50小时
+![](https://z3.ax1x.com/2021/07/02/Rg3iOs.png)
+![](https://z3.ax1x.com/2021/07/02/Rg3Pyj.png)
+
 觉得项目不错的话，就请赏个star吧！
 
 作者赞助通道↓
 
-![alt 赞助通道](https://z3.ax1x.com/2021/06/17/2xoXJx.png)
+![](https://z3.ax1x.com/2021/06/17/2xoXJx.png)
 
 ----
 

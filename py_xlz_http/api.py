@@ -45,7 +45,8 @@ def _md5_encode(string: str):
     return ''
 
 
-def _make_request(method, data: typing.Optional[dict], ignore_errors=False):
+def _make_request(method, data: typing.Union[dict, bytes, None] = None, params: typing.Optional[dict] = None,
+                  ignore_errors=False):
     """
     请求api
 
@@ -71,7 +72,10 @@ def _make_request(method, data: typing.Optional[dict], ignore_errors=False):
     t = int(round(time.time() * 1000))  # 13位时间戳，计算访问用时
 
     try:
-        ret = _session.post(_url + method, data=data, headers=headers, proxies=_proxies, timeout=_timeout)
+        ret = _session.post(_url + method, data=data, params=params, headers=headers, proxies=_proxies,
+                            timeout=_timeout)
+        if data is None:
+            data = {}
     except:
         if not ignore_errors:  # 不忽略错误
             xlz.logger.error(f'[{_get_stack()}]访问API {method} 失败\n{traceback.format_exc()}')
@@ -85,9 +89,16 @@ def _make_request(method, data: typing.Optional[dict], ignore_errors=False):
         try:
             j = ret.json()
         except:
-            xlz.logger.error(
-                f'[{_get_stack()}]解析API {method} 返回json失败 [{spent_time}ms] -> {ret.text}\n{traceback.format_exc()}')
-            raise xlz.types.ApiRequestFailedException(f'Parse API {method}\'s return Failed (Raw text: {ret.text})')
+            if not ignore_errors:
+                xlz.logger.error(
+                    f'[{_get_stack()}]解析API {method} 返回json失败 [{spent_time}ms] -> {ret.text}\n'
+                    f'{traceback.format_exc()}'
+                )
+                raise xlz.types.ApiRequestFailedException(f'Parse API {method}\'s return Failed (Raw text: {ret.text})')
+
+            # 忽略错误
+            xlz.logger.info(f'[{_get_stack()}]访问API {method} {data} [{spent_time}ms] -> {ret.content}')
+            return ret.content
         else:
             xlz.logger.info(f'[{_get_stack()}]访问API {method} {data} [{spent_time}ms] -> {ret.text}')
             if j['err']:
@@ -290,7 +301,7 @@ def upload_friend_pic(logon_qq, to_qq, pic, path_type='', is_flash=False, is_gif
     :param logon_qq: 框架QQ
     :param to_qq: 对方QQ
     :param is_flash: 是否闪照(true,false)
-    :param path_type: pic参数类型(path:本地路径,url:网络路径,其他或留空:BASE64编码数据)
+    :param path_type: pic参数类型(path:本地路径,url:网络路径,usermem:共享内存id,其他或留空:BASE64编码数据(不推荐))
     :param pic: 图片(类型由type参数决定)
     :param width: 宽度
     :param height: 高度
@@ -309,7 +320,7 @@ def upload_group_pic(logon_qq, group, pic, path_type='', is_flash=False, is_gif=
     :param logon_qq: 框架QQ
     :param group: 群号
     :param is_flash: 是否闪照(true,false)
-    :param path_type: pic参数类型(path:本地路径,url:网络路径,其他或留空:BASE64编码数据)
+    :param path_type: pic参数类型(path:本地路径,url:网络路径,usermem:共享内存id,其他或留空:BASE64编码数据(不推荐))
     :param pic: 图片(类型由type参数决定)
     :param width: 宽度
     :param height: 高度
@@ -329,7 +340,7 @@ def upload_friend_audio(logon_qq, to_qq, audio, audio_type=0, text='', path_type
     :param to_qq: 对方QQ
     :param audio_type: 语音类型(0普通语音,1变声语音,2文字语音,3红包匹配语音)
     :param text: 语音文字(文字语音填附加文字(腾讯貌似会自动替换为语音对应的文本),匹配语音填a、b、s、ss、sss，注意是小写)
-    :param path_type: audio参数类型(path:本地路径,url:网络路径,其他或留空:BASE64编码数据)
+    :param path_type: audio参数类型(path:本地路径,url:网络路径,usermem:共享内存id,其他或留空:BASE64编码数据(不推荐))
     :param audio: 语音(类型由type参数决定)
     :param audio_time: 时长
     :return:
@@ -347,7 +358,7 @@ def upload_group_audio(logon_qq, group, audio, audio_type=0, text='', path_type=
     :param group: 群号
     :param audio_type: 语音类型(0普通语音,1变声语音,2文字语音,3红包匹配语音)
     :param text: 语音文字(文字语音填附加文字(腾讯貌似会自动替换为语音对应的文本),匹配语音填a、b、s、ss、sss，注意是小写)
-    :param path_type: audio参数类型(path:本地路径,url:网络路径,其他或留空:BASE64编码数据)
+    :param path_type: audio参数类型(path:本地路径,url:网络路径,usermem:共享内存id,其他或留空:BASE64编码数据(不推荐))
     :param audio: 语音(类型由type参数决定)
     :param audio_time: 时长
     :return:
@@ -362,7 +373,7 @@ def upload_face_pic(logon_qq, pic, path_type=''):
     上传头像
 
     :param logon_qq: 框架QQ
-    :param path_type: pic参数类型(path:本地路径,url:网络路径,其他或留空:BASE64编码数据)
+    :param path_type: pic参数类型(path:本地路径,url:网络路径,usermem:共享内存id,其他或留空:BASE64编码数据(不推荐))
     :param pic: 图片(类型由type参数决定)
     :return:
     """
@@ -437,7 +448,7 @@ def get_logon_qq():
 
     :return:
     """
-    return _make_request('getlogonqq', None)
+    return _make_request('getlogonqq')
 
 
 def get_friend_list(logon_qq):
@@ -597,7 +608,7 @@ def upload_group_face_pic(logon_qq, group, pic, path_type=''):
 
     :param logon_qq: 框架QQ
     :param group: 群号
-    :param path_type: pic参数类型(path:本地路径,url:网络路径,其他或留空:BASE64编码数据)
+    :param path_type: pic参数类型(path:本地路径,url:网络路径,usermem:共享内存id,其他或留空:BASE64编码数据(不推荐))
     :param pic: 图片(类型由type参数决定)
     :return:
     """
@@ -757,7 +768,7 @@ def upload_group_file(logon_qq, group, local_path, remote_path):
     :param remote_path: 群文件夹名
     """
     data = {'logonqq': logon_qq, 'group': group, 'localpath': local_path, 'remotepath': remote_path}
-    return _make_request('uploadgroupfile', data, True)
+    return _make_request('uploadgroupfile', data, ignore_errors=True)
 
 
 def create_group_folder(logon_qq, group, name):
@@ -1375,7 +1386,7 @@ def send_group_announcement(logon_qq, group, title, content, path_type='', pic='
     :param group: 群号
     :param title: 标题(支持emoji表情,如：\uD83D\uDE01)
     :param content: 内容(支持emoji表情,如：\uD83D\uDE01)
-    :param path_type: pic参数类型(path:本地路径,url:网络路径,其他或留空: BASE64编码数据)
+    :param path_type: pic参数类型(path:本地路径,url:网络路径,usermem:共享内存id,其他或留空:BASE64编码数据(不推荐))
     :param pic: 图片(在公告当中插入图片,如果设置了[腾讯视频]参数,则不显示图片只显示视频)
     :param video: 视频(公告当中插入视频,只支持腾讯视频,如：https://v.qq.com/x/cover/4gl2i78zd9idpi0/j0024zknymk.html)
     :param is_popup: 弹窗展示(默认假)
@@ -1398,7 +1409,7 @@ def get_xlz_ver():
 
     :return:
     """
-    return _make_request('getxiaolzver', None)
+    return _make_request('getxiaolzver')
 
 
 def get_group_member_info(logon_qq, group, to_qq):
@@ -1508,7 +1519,7 @@ def upload_short_video(logon_qq, video, pic, group=None, path_type='url', pic_pa
     :param group: 群号(得到的文本代码也可在私聊使用,上传到私聊时,群号可乱填)
     :param path_type: video参数类型(path:本地路径,url:网络路径)
     :param video: 小视频
-    :param pic_path_type: pic参数类型(path:本地路径,url:网络路径,其他或留空:BASE64编码数据)
+    :param pic_path_type: pic参数类型(path:本地路径,url:网络路径,usermem:共享内存id,其他或留空:BASE64编码数据(不推荐))
     :param pic: 小视频封面图
     :param width: 宽度
     :param height: 高度
@@ -1665,7 +1676,7 @@ def upload_photo_wall(pic, logon_qq, path_type=''):
     """
     上传照片墙图片(上传一照片至照片墙,成功返回带有‘上传成功’字样的json,失败或无权限返回json)
 
-    :param path_type: pic参数类型(path:本地路径,url:网络路径,其他或留空:BASE64编码数据)
+    :param path_type: pic参数类型(path:本地路径,url:网络路径,usermem:共享内存id,其他或留空:BASE64编码数据(不推荐))
     :param pic: 图片
     :param logon_qq: 框架QQ
     :return:
@@ -2025,7 +2036,7 @@ def get_xlz_expire():
 
     :return:
     """
-    return _make_request('getxlzexpire', None)
+    return _make_request('getxlzexpire')
 
 
 def send_discussion_red_packet(packet_type, logon_qq, count, amount, discussion_id, text, pay_pwd, bankcard_id=0,
@@ -2346,3 +2357,220 @@ def get_friend_energy_and_qid(logon_qq, to_qq):
     """
     data = {'logonqq': logon_qq, 'toqq': to_qq}
     return _make_request('getfriendenergyandqid', data)
+
+
+def text_to_audio(logon_qq, text):
+    """
+    文字转语音(音源与登录QQ的性别有关,返回BASE64编码)
+
+    :param logon_qq: 框架QQ
+    :param text: 文本内容
+    :return:
+    """
+    data = {'logonqq': logon_qq, 'text': text}
+    return _make_request('text2audio', data)
+
+
+def translate(logon_qq, src_lang, dst_lang, text):
+    """
+    翻译(语种代码列表:http://www.lingoes.cn/zh/translator/langcode.htm)
+
+    :param logon_qq: 框架QQ
+    :param src_lang: 源语言语种(如:zh (中文))
+    :param dst_lang: 目标语言语种(如:ko (韩语))
+    :param text: 原文
+    :return:
+    """
+    data = {'logonqq': logon_qq, 'srclang': src_lang, 'dstlang': dst_lang, 'text': text}
+    return _make_request('translate', data)
+
+
+def amr_encode(data_type, data):
+    """
+    amr编码(返回共享内存ID)
+
+    :param data_type: data参数类型(path:本地路径 url:网络路径 usermem:共享内存id 其他或留空:BASE64编码数据(不推荐))
+    :param data: 数据
+    :return:
+    """
+    data = {'type': data_type, 'data': data}
+    return _make_request('amrencode', data)
+
+
+def silk_encode(data_type, data):
+    """
+    silk编码(返回共享内存ID)
+
+    :param data_type: data参数类型(path:本地路径 url:网络路径 usermem:共享内存id 其他或留空:BASE64编码数据(不推荐))
+    :param data: 数据
+    :return:
+    """
+    data = {'type': data_type, 'data': data}
+    return _make_request('silkencode', data)
+
+
+def silk_decode(data_type, data):
+    """
+    silk解码(返回共享内存ID)
+
+    :param data_type: data参数类型(path:本地路径 url:网络路径 usermem:共享内存id 其他或留空:BASE64编码数据(不推荐))
+    :param data: 数据
+    :return:
+    """
+    data = {'type': data_type, 'data': data}
+    return _make_request('silkdecode', data)
+
+
+class UserMem_API:
+    """
+    共享内存
+
+    本功能支持在插件中创建若干块内存，可使用HTTP API操作和访问这些内存块
+
+    *注意:请务必及时释放内存块！！！
+
+    offset是当前数据偏移量
+    """
+
+    @staticmethod
+    def create(size, desc=None):
+        """
+        创建内存块
+
+        返回内存块ID
+
+        注意:内存块ID不是内存指针
+
+        :param size: 内存块大小
+        :param desc: 备注
+        :return:
+        """
+        params = {'type': 'alloc', 'size': size, 'desc': desc}
+        return _make_request('adv/usermem', params=params)
+
+    @staticmethod
+    def free(mem_id):
+        """
+        删除内存块
+
+        :param mem_id: 内存块ID
+        :return:
+        """
+        params = {'type': 'free', 'id': mem_id}
+        return _make_request('adv/usermem', params=params)
+
+    @staticmethod
+    def read(mem_id, length):
+        """
+        读内存块内容
+
+        注意:从当前offset开始读，读完后offset将向后移动实际读取长度的大小，若欲读取长度大于实际可读长度则会截断
+
+        :param mem_id: 内存块ID
+        :param length: 长度
+        :return:
+        """
+        params = {'type': 'read', 'id': mem_id, 'length': length}
+        return _make_request('adv/usermem', params=params, ignore_errors=True)
+
+    @staticmethod
+    def write(mem_id, data: bytes):
+        """
+        写内存块
+
+        注意:从当前offset开始写，写完后offset将向后移动实际写入长度的大小，应使用raw post提交数据，若欲写入数据长度大于实际可写数据长度则会截断，返回实际写入的长度
+
+        :param mem_id: 内存块ID
+        :param data: 数据
+        :return:
+        """
+        params = {'type': 'write', 'id': mem_id}
+        return _make_request('adv/usermem', data, params)
+
+    @staticmethod
+    def set_offset(mem_id, offset):
+        """
+        设置offset
+
+        :param mem_id: 内存块ID
+        :param offset: 新的offset
+        :return:
+        """
+        params = {'type': 'offset', 'id': mem_id, 'offset': offset}
+        return _make_request('adv/usermem', params=params)
+
+    @staticmethod
+    def query(mem_id):
+        """
+        查询内存块
+
+        :param mem_id: 内存块ID
+        :return:
+        """
+        params = {'type': 'query', 'id': mem_id}
+        return _make_request('adv/usermem', params=params)
+
+    @staticmethod
+    def list():
+        """
+        内存块列表
+
+        :return:
+        """
+        params = {'type': 'list'}
+        return _make_request('adv/usermem', params=params)
+
+
+class SchWork_API:
+    """
+    本功能支持设置定时任务，定时产生事件，通过ws或事件上报发送，类型为ScheduleWork
+
+    返回任务ID
+    """
+
+    @staticmethod
+    def create(timestamp, arg, desc=None):
+        """
+        创建任务(一次性)
+
+        返回任务ID
+
+        :param timestamp: 触发任务时间戳(10位)
+        :param arg: 产生事件时附带参数
+        :param desc: 备注
+        :return:
+        """
+        params = {'type': 'create', 'time': timestamp, 'arg': arg, 'desc': desc}
+        return _make_request('adv/schwork', params=params)
+
+    @staticmethod
+    def remove(task_id):
+        """
+        删除任务
+
+        :param task_id: 任务ID
+        :return:
+        """
+        params = {'type': 'remove', 'id': task_id}
+        return _make_request('adv/schwork', params=params)
+
+    @staticmethod
+    def query(task_id):
+        """
+        查询任务
+
+        :param task_id: 任务ID
+        :return:
+        """
+        params = {'type': 'query', 'id': task_id}
+        return _make_request('adv/schwork', params=params)
+
+    @staticmethod
+    def list():
+        """
+        任务列表
+
+        :return:
+        """
+        params = {'type': 'list'}
+        return _make_request('adv/schwork', params=params)
