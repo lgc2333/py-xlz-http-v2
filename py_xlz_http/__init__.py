@@ -31,8 +31,6 @@ Telegram:@lgc2333
 
 __version__ = "2.0.2(20210702)"
 
-import requests
-
 print(__doc__.replace('\n\n', '\n').strip())
 
 import inspect
@@ -46,6 +44,8 @@ import traceback
 import types
 import typing
 from functools import wraps
+
+import requests
 
 # 供外部调用
 import py_xlz_http.api
