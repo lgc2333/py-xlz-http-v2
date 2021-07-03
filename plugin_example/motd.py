@@ -1,7 +1,7 @@
 # coding=utf-8
 __name__ = 'MC服务器信息查询'
 
-import mcstatus as mc
+import mcstatus as mc # pip install mcstatus
 
 import py_xlz_http as xlz
 
