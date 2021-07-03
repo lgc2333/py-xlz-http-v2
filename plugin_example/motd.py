@@ -81,10 +81,11 @@ def motd(address: str, logon_qq, source, is_fri):
 def motdpe(address: str):
     def del_escape(string: str):
         # 48-57(0-9),97-122(a-z)
-        for i in range(48, 57 + 1):
-            string = string.replace(f'§{chr(i)}', '')
-        for i in range(97, 122 + 1):
-            string = string.replace(f'§{chr(i)}', '')
+        if string:
+            for i in range(48, 57 + 1):
+                string = string.replace(f'§{chr(i)}', '')
+            for i in range(97, 122 + 1):
+                string = string.replace(f'§{chr(i)}', '')
         return string
 
     address = address.strip()
