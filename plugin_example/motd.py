@@ -1,9 +1,20 @@
 # coding=utf-8
 __name__ = 'MC服务器信息查询'
 
-import mcstatus as mc # pip install mcstatus
+import mcstatus as mc
 
 import py_xlz_http as xlz
+
+
+def del_escape(string: str):
+    # 48-57(0-9),65-90(A-Z),97-122(a-z)
+    for i in range(48, 57 + 1):
+        string = string.replace(f'§{chr(i)}', '')
+    for i in range(65, 90 + 1):
+        string = string.replace(f'§{chr(i)}', '')
+    for i in range(97, 122 + 1):
+        string = string.replace(f'§{chr(i)}', '')
+    return string
 
 
 def motd(address: str, logon_qq, source, is_fri):
@@ -21,26 +32,8 @@ def motd(address: str, logon_qq, source, is_fri):
                 '!motd <服务器IP> (电脑版)\n'
                 '!motdpe <服务器IP> (手机版)')
 
-    pos = address.rfind(':')
-    if pos == -1:
-        ip = address
-        port = 25565
-    else:
-        ip = address[:pos]
-        port = address[pos + 1:]
-
-        if not port.isdigit():
-            return '[MCJE服务器信息]\n端口无效，请输入正确的端口！（1~65535）'
-
-        port = int(port)
-
-    if not ip:
-        return '[MCJE服务器信息]\n请填写正确的服务器IP'
-    if not 1 <= port <= 65535:
-        return '[MCJE服务器信息]\n端口无效，请输入正确的端口！（1~65535）'
-
     try:
-        ret = mc.MinecraftServer(ip, port).status()
+        ret = mc.MinecraftServer.lookup(address).status()
         latency = ret.latency
         ret = ret.raw
     except Exception as e:
@@ -57,7 +50,9 @@ def motd(address: str, logon_qq, source, is_fri):
 
     players = ''
     if 'sample' in ret['players']:
-        players = f'玩家列表（最多显示十个）：{", ".join([x["name"] for x in ret["players"]["sample"]][:10])}\n'
+        player_list = [del_escape(x["name"]) for x in ret["players"]["sample"]]
+        player_list = [x for x in player_list if x]
+        players = f'玩家列表（最多显示十个）：{", ".join(player_list[:10])}\n'
 
     mod_info = ''
     if 'modinfo' in ret:
@@ -67,27 +62,22 @@ def motd(address: str, logon_qq, source, is_fri):
             mod_info = '无'
         mod_info = f'\nMod端类型：{ret["modinfo"]["type"]}\nMod列表（最多显示十个）：{mod_info}'
 
+    players_online = ret["players"]["online"]
+    players_max = ret["players"]["max"]
+    online_percent = round(players_online / players_max * 100, 2)
+
     return ('[MCJE服务器信息]\n'
             f'{pic_text}'
             f'服务端名：{ret["version"]["name"]}\n'
             f'协议版本：{ret["version"]["protocol"]}\n'
-            f'当前人数：{ret["players"]["online"]}/{ret["players"]["max"]}\n'
+            f'当前人数：{players_online}/{players_max}({online_percent}%)\n'
             f'{players}'
-            f'描述文本：\n{parse_desc(ret["description"])}\n'
+            f'描述文本：\n{del_escape(parse_desc(ret["description"]))}\n'
             f'游戏延迟：{latency}ms'
             f'{mod_info}')
 
 
 def motdpe(address: str):
-    def del_escape(string: str):
-        # 48-57(0-9),97-122(a-z)
-        if string:
-            for i in range(48, 57 + 1):
-                string = string.replace(f'§{chr(i)}', '')
-            for i in range(97, 122 + 1):
-                string = string.replace(f'§{chr(i)}', '')
-        return string
-
     address = address.strip()
     if not address:
         return ('[MCBE服务器信息]\n'
@@ -95,37 +85,23 @@ def motdpe(address: str):
                 '!motd <服务器IP> (电脑版)\n'
                 '!motdpe <服务器IP> (手机版)')
 
-    pos = address.rfind(':')
-    if pos == -1:
-        ip = address
-        port = 19132
-    else:
-        ip = address[:pos]
-        port = address[pos + 1:]
-
-        if not port.isdigit():
-            return '[MCBE服务器信息]\n端口无效，请输入正确的端口！（1~65535）'
-
-        port = int(port)
-
-    if not ip:
-        return '[MCBE服务器信息]\n请填写正确的服务器IP'
-    if not 1 <= port <= 65535:
-        return '[MCBE服务器信息]\n端口无效，请输入正确的端口！（1~65535）'
-
     try:
-        ret = mc.MinecraftBedrockServer(ip, port).status()
+        ret = mc.MinecraftBedrockServer.lookup(address).status()
     except Exception as e:
         return f'[MCBE服务器信息]\n操作失败：{e}'
 
+    map_name = f'存档名称：{del_escape(ret.map)}\n' if ret.map else ''
+    game_mode = f'游戏模式：{ret.gamemode}\n' if ret.gamemode else ''
+    online_percent = round(int(ret.players_online) / int(ret.players_max) * 100, 2)
+
     return ('[MCBE服务器信息]\n'
             f'协议版本：{ret.version.protocol}\n'
-            # f'游戏版本：{ret.version.brand}\n'
+            f'游戏版本：{ret.version.version}\n'
             f'描述文本：{del_escape(ret.motd)}\n'
-            f'在线人数：{ret.players_online}/{ret.players_max}\n'
-            f'存档名称：{del_escape(ret.map)}\n'
-            f'游戏模式：{ret.gamemode}\n'
-            f'游戏延迟：{round(ret.latency * 1000, 2)}ms')
+            f'在线人数：{ret.players_online}/{ret.players_max}({online_percent}%)\n'
+            f'{map_name}'
+            f'{game_mode}'
+            f'游戏延迟：{round(ret.latency * 1000, 3)}ms')
 
 
 @xlz.private_msg_handler()
