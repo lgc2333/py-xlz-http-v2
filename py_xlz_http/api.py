@@ -46,7 +46,7 @@ def _md5_encode(string: str):
 
 
 def _make_request(method, data: typing.Union[dict, bytes, None] = None, params: typing.Optional[dict] = None,
-                  ignore_errors=False):
+                  ignore_errors=False) -> typing.Optional[typing.Any]:
     """
     请求api
 
