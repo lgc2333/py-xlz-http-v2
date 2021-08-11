@@ -47,7 +47,7 @@ def group(message: xlz.types.GroupMsg):
     if message.from_qq.qq != message.logon_qq and message.from_qq.qq != message.logon_qq_anonymous_id:  # 过滤自己(包括其他设备)的消息，你也可以不过滤
         # 在付费版本当中，真正的红包等将传入文本代码，直接发送红包等的代码将被框架转义，再传入，所以不用担心安全问题
 
-        if message.msg.subtype == xlz.types.MessageTypes.讨论组消息:
+        if message.msg.subtype == xlz.types.MessageTypes.讨论组消息.value:
             # 讨论组消息处理
             pass
 
