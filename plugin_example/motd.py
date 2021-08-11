@@ -175,7 +175,7 @@ def group(message: xlz.types.GroupMsg):
         if text.startswith('!motdpe'):
             content = reply_content + motdpe(text[7:])
 
-            if message.msg.subtype == xlz.types.MessageTypes.讨论组消息:
+            if message.msg.subtype == xlz.types.MessageTypes.讨论组消息.value:
                 xlz.api.send_discussion_msg(message.logon_qq, message.from_group.group, content)
             else:
                 xlz.api.send_group_msg(message.logon_qq, message.from_group.group, content)
@@ -185,7 +185,7 @@ def group(message: xlz.types.GroupMsg):
         if text.startswith('!motd'):
             content = reply_content + motd(text[5:], message.logon_qq, message.from_group.group, False)
 
-            if message.msg.subtype == xlz.types.MessageTypes.讨论组消息:
+            if message.msg.subtype == xlz.types.MessageTypes.讨论组消息.value:
                 xlz.api.send_discussion_msg(message.logon_qq, message.from_group.group, content)
             else:
                 xlz.api.send_group_msg(message.logon_qq, message.from_group.group, content)
