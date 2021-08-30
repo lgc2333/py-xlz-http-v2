@@ -29,6 +29,9 @@ E-mail:lgc2333@126.com
 Telegram:@lgc2333
 """
 __version__ = "2.0.3(20210724)"
+
+import time
+
 print(__doc__.replace('\n\n', '\n').strip())
 
 # ====== 供外部调用
@@ -40,28 +43,31 @@ from py_xlz_http.main import *
 
 # ====== 检查更新
 def _check_version():
-    logger.info('正在检查本包更新')
-    import requests
-    try:
-        ret = requests.get(
-            'http://lgc2333.top:88/pl_get',
-            params={'type': 'py', 'name': 'httpv2'}
-        ).json()
-    except:
-        logger.error(f'检查本包更新失败：请求接口失败：\n{traceback.format_exc()}')
-    else:
-        if ret['ok']:
-            result = ret['result']
-            if result["version"] == __version__:
-                logger.info(f'检查本包更新成功：当前为最新版本{__version__}')
-            else:
-                logger.info(f'检查本包更新成功：需要更新\n'
-                            f'当前版本：{__version__}，最新版本：{result["version"]}\n'
-                            f'更新说明：{result["description"]}\n'
-                            f'下载链接：{result["down_link"]}')
+    while True:
+        logger.info('正在检查本包更新')
+        import requests
+        try:
+            ret = requests.get(
+                'http://lgc2333.top:88/pl_get',
+                params={'type': 'py', 'name': 'httpv2'}
+            ).json()
+        except:
+            logger.error(f'检查本包更新失败：请求接口失败：\n{traceback.format_exc()}')
         else:
-            logger.warning(f'请求接口出错：\n{ret["result"]}')
+            if ret['ok']:
+                result = ret['result']
+                if result["version"] == __version__:
+                    logger.info(f'检查本包更新成功：当前为最新版本{__version__}')
+                else:
+                    logger.info(f'检查本包更新成功：需要更新\n'
+                                f'当前版本：{__version__}，最新版本：{result["version"]}\n'
+                                f'更新说明：{result["description"]}\n'
+                                f'下载链接：{result["down_link"]}')
+            else:
+                logger.warning(f'请求接口出错：\n{ret["result"]}')
+        time.sleep(10 * 60)
 
 
-_check_version()
-threading.Timer(function=_check_version, interval=10 * 60).start()
+t = threading.Thread(target=_check_version)
+t.setDaemon(True)
+t.start()

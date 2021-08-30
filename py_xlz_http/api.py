@@ -58,22 +58,31 @@ def _make_request(method, data: typing.Union[dict, bytes, None] = None, params: 
     if not _inited:
         raise xlz.types.ApiInitException('API did not init yet')
 
-    headers = {}
+    # headers = {}
+    cookies = {}
     if _user:
         # 设置了user，置请求头
         timestamp = int(time.time())  # 10位时间戳
-        # #signature:md5(用户名+请求路径+md5(密码)+timestamp)
+        # signature:md5(用户名+请求路径+md5(密码)+timestamp)
         signature = _md5_encode(f'{_user}/{method}{_md5_encode(_password)}{timestamp}')
+        # 身份验证:加入cookies如下
+        # user:用户名
+        # timestamp:10位Unix时间戳，与服务端所在机器时间戳差±200秒内即可
+        # signature:md5(用户名+请求路径+md5(密码)+timestamp)
+        cookies['user'] = _user
+        cookies['signature'] = signature
+        cookies['timestamp'] = str(timestamp)
+
         # 1.1.0.4及以后的版本支持请求头传递参数,user对应H-Auth-User,signature对应H-Auth-Signature,timestamp对应H-Auth-Timestamp
-        headers['H-Auth-User'] = _user
-        headers['H-Auth-Signature'] = signature
-        headers['H-Auth-Timestamp'] = str(timestamp)
+        # headers['H-Auth-User'] = _user
+        # headers['H-Auth-Signature'] = signature
+        # headers['H-Auth-Timestamp'] = str(timestamp)
 
     t = int(round(time.time() * 1000))  # 13位时间戳，计算访问用时
 
     try:
-        ret = _session.post(_url + method, data=data, params=params, headers=headers, proxies=_proxies,
-                            timeout=_timeout)
+        ret = _session.post(_url + method, data=data, params=params, proxies=_proxies,  # headers=headers,
+                            timeout=_timeout, cookies=cookies)
         if data is None:
             data = {}
     except:
