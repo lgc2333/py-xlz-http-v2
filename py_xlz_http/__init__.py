@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-py-xlz-http  version 2.0.4(20210831)
+py-xlz-http  version 2.0.5(20211030)
 
 Copyright (c) 2021 student_2333
 
@@ -28,7 +28,7 @@ E-mail:lgc2333@126.com
 
 Telegram:@lgc2333
 """
-__version__ = "2.0.4(20210831)"
+__version__ = "2.0.5(20211030)"
 
 import time
 
