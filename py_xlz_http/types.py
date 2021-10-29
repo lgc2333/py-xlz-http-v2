@@ -79,7 +79,7 @@ class PrivateMsg(object):
         self.from_group = self.__cls_from_group(j['fromgroup'])
         self.msg = self.__cls_msg(j['msg'])
         self.red_packet = self.__cls_hb(j['hb'])
-        self.file = self.__cls_file(j['file'])
+        self.file = self.__cls_file(j['file']) if j.get('file') else None
         self.msg_part = self.__cls_msg_part(j['msgpart'])
         self.session_token: str = j['sessiontoken']
 
