@@ -15,7 +15,7 @@ import requests
 
 import py_xlz_http as xlz
 
-bind_cmd = r'绑定 ?([15][0-9]{8}) (.*)'
+bind_cmd = r'绑定 ?([1256][0-9]{8}) (.*)'
 avatar_json = {
     "Albedo": "阿贝多",
     "Ambor": "安柏",
