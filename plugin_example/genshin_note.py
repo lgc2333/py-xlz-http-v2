@@ -100,6 +100,9 @@ class BaseData(pydantic.BaseModel):
     finished_task_num: Literal[0, 1, 2, 3, 4]
     total_task_num: int = 4
     is_extra_task_reward_received: bool
+    current_home_coin: int
+    max_home_coin: int
+    home_coin_recovery_time: str
 
     expeditions: List[dict]
 
@@ -219,6 +222,15 @@ def get_task_num_data(base_data: BaseData) -> str:
             f"奖励{'已' if base_data.is_extra_task_reward_received else '未'}领取")
 
 
+def get_coin_data(base_data: BaseData) -> str:
+    coin = f'{base_data.current_home_coin}/{base_data.max_home_coin}'
+    if base_data.current_home_coin<base_data.max_home_coin:
+        coin_rec_time=seconds2hours(int(base_data.home_coin_recovery_time))
+        coin_add_speed=math.ceil((base_data.max_home_coin-base_data.current_home_coin)/(int(base_data.home_coin_recovery_time)/60/60))
+        coin+=f'（{coin_rec_time} 约{coin_add_speed}/h）'
+    return coin
+
+
 def get_expedition_data(base_data: BaseData) -> str:
     expedition_info: list[str] = []
     finished = 0
@@ -279,6 +291,7 @@ def query_note(qq):
                 f'{get_resin_data(note_data)}\n'
                 f'{get_resin_discount_data(note_data)}\n'
                 f'{get_task_num_data(note_data)}\n'
+                f'{get_coin_data(note_data)}\n'
                 f'{get_expedition_data(note_data)}')
     except Exception as a:
         return '查询失败！请检查cookies与游戏uid是否对应或是否已开启米游社实时便笺功能，如确认无误仍然不行请联系机器主人\n' + str(a)
