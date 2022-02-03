@@ -8,6 +8,7 @@ License: LGPL-2.1
 
 [![wakatime](https://wakatime.com/badge/user/b61b0f9a-f40b-4c82-bc51-0a75c67bfccf/project/478647ac-a896-4ac4-a4f5-db0a884bff24.svg)](https://wakatime.com/badge/user/b61b0f9a-f40b-4c82-bc51-0a75c67bfccf/project/478647ac-a896-4ac4-a4f5-db0a884bff24)
 [![wakatime](https://wakatime.com/badge/user/b61b0f9a-f40b-4c82-bc51-0a75c67bfccf/project/84362dd5-2ccb-498f-a2cf-f4420447bcf2.svg)](https://wakatime.com/badge/user/b61b0f9a-f40b-4c82-bc51-0a75c67bfccf/project/84362dd5-2ccb-498f-a2cf-f4420447bcf2)
+[![CodeFactor](https://www.codefactor.io/repository/github/lgc2333/py-xlz-http-v2/badge)](https://www.codefactor.io/repository/github/lgc2333/py-xlz-http-v2)
 
 使用方法详见[Wiki](https://github.com/lgc2333/py-xlz-http-v2/wiki)
 
