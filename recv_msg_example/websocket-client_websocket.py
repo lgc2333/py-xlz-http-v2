@@ -90,7 +90,7 @@ if __name__ == '__main__':
     password = 'pass'  # 密码
     t = int(time.time())
     s = md5_encode(f'{user}/ws{md5_encode(password)}{t}')
-    auth = f'?user=user&timestamp={t}&signature={s}'
+    auth = f'?user={user}&timestamp={t}&signature={s}'
     # '''
     # auth = ''
 
