@@ -115,6 +115,76 @@ def _make_request(method, data: typing.Union[dict, bytes, None] = None, params: 
             return j['ret']
 
 
+def _make_request_list(method, data: typing.Union[dict, bytes, None] = None, params: typing.Optional[dict] = None,
+                       ignore_errors=False) -> typing.Optional[typing.Any]:
+    """
+    请求api 返回list
+
+    :param method: 路径名，不带/
+    :param data: 提交数据dict
+    :param ignore_errors: 忽略访问时出错，返回None
+    :return: ret
+    """
+    if not _inited:
+        raise xlz.types.ApiInitException('API did not init yet')
+
+    # headers = {}
+    cookies = {}
+    if _user:
+        # 设置了user，置请求头
+        timestamp = int(time.time())  # 10位时间戳
+        # signature:md5(用户名+请求路径+md5(密码)+timestamp)
+        signature = _md5_encode(f'{_user}/{method}{_md5_encode(_password)}{timestamp}')
+        # 身份验证:加入cookies如下
+        # user:用户名
+        # timestamp:10位Unix时间戳，与服务端所在机器时间戳差±200秒内即可
+        # signature:md5(用户名+请求路径+md5(密码)+timestamp)
+        cookies['user'] = _user
+        cookies['signature'] = signature
+        cookies['timestamp'] = str(timestamp)
+
+        # 1.1.0.4及以后的版本支持请求头传递参数,user对应H-Auth-User,signature对应H-Auth-Signature,timestamp对应H-Auth-Timestamp
+        # headers['H-Auth-User'] = _user
+        # headers['H-Auth-Signature'] = signature
+        # headers['H-Auth-Timestamp'] = str(timestamp)
+
+    t = int(round(time.time() * 1000))  # 13位时间戳，计算访问用时
+
+    try:
+        ret = _session.post(_url + method, data=data, params=params, proxies=_proxies,  # headers=headers,
+                            timeout=_timeout, cookies=cookies)
+        if data is None:
+            data = {}
+    except:
+        if not ignore_errors:  # 不忽略错误
+            xlz.logger.error(f'[{_get_stack()}]访问API {method} 失败\n{traceback.format_exc()}')
+            raise xlz.types.ApiRequestFailedException(f'Request API {method} Failed')
+
+        # 忽略错误
+        xlz.logger.info(f'[{_get_stack()}]访问API {method} {data} [{int(round(time.time() * 1000)) - t}ms] -> None')
+        return None
+    else:
+        spent_time = int(round(time.time() * 1000)) - t
+        try:
+            j = ret.json()
+        except:
+            if not ignore_errors:
+                xlz.logger.error(
+                    f'[{_get_stack()}]解析API {method} 返回json失败 [{spent_time}ms] -> {ret.text}\n'
+                    f'{traceback.format_exc()}'
+                )
+                raise xlz.types.ApiRequestFailedException(f'Parse API {method}\'s return Failed (Raw text: {ret.text})')
+
+            # 忽略错误
+            xlz.logger.info(f'[{_get_stack()}]访问API {method} {data} [{spent_time}ms] -> {ret.content}')
+            return ret.content
+        else:
+            xlz.logger.info(f'[{_get_stack()}]访问API {method} {data} [{spent_time}ms] -> {ret.text}')
+            if j['err']:
+                raise xlz.types.ApiRequestFailedException(j['err'])
+            return j['list']['List']
+
+
 def init(url: str = 'http://localhost:10429/', user: typing.Optional[str] = None,
          password: typing.Optional[str] = None, proxies: dict = None, timeout: int = 15):
     """
@@ -468,7 +538,7 @@ def get_friend_list(logon_qq):
     :return:
     """
     data = {'logonqq': logon_qq}
-    return _make_request('getfriendlist', data)
+    return _make_request_list('getfriendlist', data)
 
 
 def get_group_list(logon_qq):
@@ -872,7 +942,7 @@ def get_group_file_list(logon_qq, group, folder=''):
     :return:
     """
     data = {'logonqq': logon_qq, 'group': group, 'folder': folder}
-    return _make_request('getgroupfilelist', data)
+    return _make_request_list('getgroupfilelist', data)
 
 
 def set_online_state(logon_qq, main, sun=None, power=None):
